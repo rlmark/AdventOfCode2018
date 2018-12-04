@@ -52,11 +52,11 @@ object December3 {
 
   def findUnique(list: List[Claim]) = {
     val mapResult: mutable.Map[XY, Int] = createClaimMap(list)
-    val res = list.find{case claim =>
+    val claim: Option[Claim] = list.find{case claim =>
       val thisClaimsMap = fillXY(claim, mutable.Map())
-        thisClaimsMap.forall{case(xy,count) => mapResult(xy) == 1}
+        thisClaimsMap.forall{case(xy,_) => mapResult(xy) == 1}
     }
-    res
+    claim
   }
 }
 
