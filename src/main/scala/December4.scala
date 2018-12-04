@@ -15,11 +15,11 @@ object December4 {
     val format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     val dateTime = LocalDateTime.parse(timeString, format)
 
-    val event = rawString.substring(18)
-    if (event.contains("Gaurd")) {
-      val guardRegex = "#([0-9]+)".r
-      val guardRegex(guardId) = rawString
-      ParseResult(dateTime, GuardArrives(guardId.toInt))
+    val event: String = rawString.substring(18)
+    println(event)
+    if (event.contains("Guard")) {
+      val id = event.filter(c => c.isDigit)
+      ParseResult(dateTime, GuardArrives(id.toInt))
     }
     else if (event.contains("wakes up")) ParseResult(dateTime, Wake)
     else ParseResult(dateTime, Sleep)
