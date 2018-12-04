@@ -12,7 +12,10 @@ object Main {
 //    println(day2String)
 
     // Day 3
-    val day3Input = December3.parseInput("december_3_input")
-    day3Input.take(3).foreach(println)
+    val lines = December3.parseInput("december_3_input")
+//    val day3Input = December3.countSharedClaims(lines)
+    val unique = December3.findUnique(lines)
+//    println(day3Input)
+    println(unique)
   }
 }
