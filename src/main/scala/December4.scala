@@ -1,39 +1,36 @@
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 
 import scala.io.Source
 
 object December4 {
-  def parseInput(filename: String): List[ParseResult] = {
+  def parseInput(filename: String): List[Schedule] = {
     val inputStream = getClass.getResourceAsStream(filename)
     val lines = Source.fromInputStream(inputStream).getLines
-    lines.map(string => makeParseResult(string)).toList
+    lines.map(string => makeSchedule(string)).toList
   }
 
-  def makeParseResult(rawString: String): ParseResult = {
+  def makeSchedule(rawString: String): Schedule = {
     val timeString = rawString.substring(1, 17)
     val format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     val dateTime = LocalDateTime.parse(timeString, format)
 
-    val event: String = rawString.substring(18)
-    println(event)
-    if (event.contains("Guard")) {
-      val id = event.filter(c => c.isDigit)
-      ParseResult(dateTime, GuardArrives(id.toInt))
+    val eventString: String = rawString.substring(18)
+    if (eventString.contains("Guard")) {
+      val id = eventString.filter(c => c.isDigit)
+      Schedule(dateTime, GuardArrives(id.toInt))
     }
-    else if (event.contains("wakes up")) ParseResult(dateTime, Wake)
-    else ParseResult(dateTime, Sleep)
+    else if (eventString.contains("wakes up")) Schedule(dateTime, Wake)
+    else Schedule(dateTime, Sleep)
+  }
+
+  def orderSchedule(schedules: List[Schedule]): List[Schedule] = {
+    implicit val localDateTimeOrdering: Ordering[LocalDateTime] = Ordering.by(x => x.toEpochSecond(ZoneOffset.UTC))
+    schedules.sortBy(schedule => schedule.localDateTime)
   }
 }
 
-
-case class TimeStamp(year: Int, month: Int, day: Int, hour: Int, minute: Int) {
-  def toDateTime(): LocalDateTime = {
-    LocalDateTime.of(year, month, day, hour, minute)
-  }
-}
-
-case class ParseResult(localDateTime: LocalDateTime, guardEvent: Event)
+case class Schedule(localDateTime: LocalDateTime, guardEvent: Event)
 
 sealed trait Event
 case class GuardArrives(id: Int) extends Event
