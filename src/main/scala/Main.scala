@@ -18,8 +18,8 @@ object Main {
 //    println(day3Input)
 //    println(unique)
     // Day 4
-    val schedules = December4.parseInput("december_4_input")
-    val ordered = December4.orderSchedule(schedules)
+    val events = December4.parseInput("december_4_input")
+    val ordered = December4.orderSchedule(events)
     ordered.foreach(println)
   }
 }
