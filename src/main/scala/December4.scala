@@ -1,6 +1,7 @@
-import java.time.{LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZoneOffset}
 
+import scala.collection.immutable
 import scala.io.Source
 
 object December4 {
@@ -45,6 +46,23 @@ object December4 {
       .groupBy{guardToNap => guardToNap._1}
       .map{case(k, v) => k -> v.flatMap{case (_, nap) => nap}}
   }
+
+  def sleepiestGuard(guardsNapping: Map[GuardId, List[Nap]]): (GuardId, Double) = {
+    val guardsWithDuration: Map[GuardId, Double] = guardsNapping.map {
+        case(guardId: GuardId, napList: List[Nap]) => (guardId, napList.flatMap(_.durationInMinutes).sum)}
+    guardsWithDuration.toList.maxBy{case(_, minutes) => minutes}
+  }
+  def minuteGuardSleptMost(guardsNapping: Map[GuardId, List[Nap]], targetGuard: GuardId): Int = {
+    val napList: immutable.Seq[Nap] = guardsNapping(guardsNapping)
+    napList.flatMap{nap =>
+      val startEpocSecond = nap.start.time.toEpochSecond(ZoneOffset.UTC)
+      val endEpocSecond = nap.end.map(wake => wake.time.toEpochSecond(ZoneOffset.UTC))
+      val timeSpanAllSeconds = endEpocSecond.map(end => startEpocSecond to end)
+      val minutes: Option[immutable.IndexedSeq[Int]] = timeSpanAllSeconds.map(ts => ts.map(epochSec => LocalDateTime.ofEpochSecond(epochSec, 0, ZoneOffset.UTC).getMinute))
+      minutes//.map(allMinutes => allMinutes.groupBy(identity).mapValues(_.size))
+      
+    }.map(allMinutes => allMinutes.groupBy(identity).mapValues(_.size))
+  }
 }
 
 sealed trait Event {
@@ -57,7 +75,6 @@ case class Wake(time: LocalDateTime) extends SleepEvent
 case class Sleep(time: LocalDateTime) extends SleepEvent
 
 case class Nap(start: Sleep, end: Option[Wake]){
-  def isFinished: Boolean = end.isDefined
   def durationInMinutes: Option[Double] = {
     end.map { e =>
       val seconds = e.time.toEpochSecond(ZoneOffset.UTC) - start.time.toEpochSecond(ZoneOffset.UTC)

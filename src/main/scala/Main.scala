@@ -21,6 +21,8 @@ object Main {
     val events = December4.parseInput("december_4_input")
     val ordered = December4.orderEvents(events)
     val naps = December4.guardsTakeNaps(ordered)
-    naps.foreach(println)
+    val sleepiest = December4.sleepiestGuard(naps)
+    println(sleepiest)
+
   }
 }
