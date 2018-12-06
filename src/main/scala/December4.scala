@@ -24,13 +24,26 @@ object December4 {
     else  Sleep(dateTime)
   }
 
-  def orderSchedule(events: List[Event]): List[Event] = {
+  def orderEvents(events: List[Event]): List[Event] = {
     implicit val localDateTimeOrdering: Ordering[LocalDateTime] = Ordering.by(x => x.toEpochSecond(ZoneOffset.UTC))
     events.sortBy(event => event.time)
   }
 
-  def read(schedules:List[Event]): Map[GuardId, List[Nap]]= {
-    ???
+  def guardsTakeNaps(orderedEvents: List[Event]): Map[GuardId, List[Nap]] = {
+    def loop(events: List[Event], acc: List[(GuardId, Option[Nap])]): List[(GuardId, Option[Nap])] = {
+      events match {
+        case Nil => acc
+        case (g:GuardArrives)::tail => loop(tail, acc :+ (g.guard, None))
+        case (s: Sleep)::tail => loop(tail, acc.dropRight(1) :+  acc.last.copy(_2 = Some(Nap(s, None))))
+        case (w: Wake)::tail =>
+          val lastItem = acc.last
+          val lastNap: Option[Nap] = lastItem._2.map(nap => nap.copy(end = Some(w)))
+          loop(tail, acc.dropRight(1) :+  acc.last.copy(_2 =  lastNap))
+      }
+    }
+    loop(orderedEvents, Nil)
+      .groupBy{guardToNap => guardToNap._1}
+      .map{case(k, v) => k -> v.flatMap{case (_, nap) => nap}}
   }
 }
 
@@ -43,9 +56,12 @@ case class GuardArrives(guard: GuardId, time: LocalDateTime) extends Event
 case class Wake(time: LocalDateTime) extends SleepEvent
 case class Sleep(time: LocalDateTime) extends SleepEvent
 
-case class Nap(start: Sleep, end: Wake){
-  def durationInMinutes = {
-    val seconds = end.time.toEpochSecond(ZoneOffset.UTC) - start.time.toEpochSecond(ZoneOffset.UTC)
-    seconds / 60.0
+case class Nap(start: Sleep, end: Option[Wake]){
+  def isFinished: Boolean = end.isDefined
+  def durationInMinutes: Option[Double] = {
+    end.map { e =>
+      val seconds = e.time.toEpochSecond(ZoneOffset.UTC) - start.time.toEpochSecond(ZoneOffset.UTC)
+      seconds / 60.0
+    }
   }
 }
