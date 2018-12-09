@@ -22,7 +22,8 @@ object Main {
     val ordered = December4.orderEvents(events)
     val naps = December4.guardsTakeNaps(ordered)
     val sleepiest = December4.sleepiestGuard(naps)
-    println(sleepiest)
+    val t = December4.minuteGuardSleptMost(naps, sleepiest._1)
+    println(t)
 
   }
 }

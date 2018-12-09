@@ -1,5 +1,6 @@
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZoneOffset}
+import cats._, cats.data._, cats.implicits._
 
 import scala.collection.immutable
 import scala.io.Source
@@ -52,16 +53,17 @@ object December4 {
         case(guardId: GuardId, napList: List[Nap]) => (guardId, napList.flatMap(_.durationInMinutes).sum)}
     guardsWithDuration.toList.maxBy{case(_, minutes) => minutes}
   }
-  def minuteGuardSleptMost(guardsNapping: Map[GuardId, List[Nap]], targetGuard: GuardId): Int = {
-    val napList: immutable.Seq[Nap] = guardsNapping(guardsNapping)
-    napList.flatMap{nap =>
+  def minuteGuardSleptMost(guardsNapping: Map[GuardId, List[Nap]], targetGuard: GuardId) = {
+
+    val napList: immutable.Seq[Nap] = guardsNapping(targetGuard)
+    val listOfMinuteOccurances: immutable.Seq[Map[Int, Int]] = napList.flatMap{ nap =>
       val startEpocSecond = nap.start.time.toEpochSecond(ZoneOffset.UTC)
       val endEpocSecond = nap.end.map(wake => wake.time.toEpochSecond(ZoneOffset.UTC))
       val timeSpanAllSeconds = endEpocSecond.map(end => startEpocSecond to end)
       val minutes: Option[immutable.IndexedSeq[Int]] = timeSpanAllSeconds.map(ts => ts.map(epochSec => LocalDateTime.ofEpochSecond(epochSec, 0, ZoneOffset.UTC).getMinute))
-      minutes//.map(allMinutes => allMinutes.groupBy(identity).mapValues(_.size))
-      
-    }.map(allMinutes => allMinutes.groupBy(identity).mapValues(_.size))
+      minutes.map(allMinutes => allMinutes.groupBy(identity).mapValues(_.size))
+    }
+    listOfMinuteOccurances.reduce{case(m, m2) => m.combine(m2)}
   }
 }
 
